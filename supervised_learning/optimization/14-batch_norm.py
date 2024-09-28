@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Defines function that creates a batch normalization layer
-for a neural network in TensorFlow
+    function def create_batch_norm_layer(prev, n, activation):
+    that creates a batch normalization layer for a neural network
 """
 
 
@@ -10,35 +10,29 @@ import tensorflow as tf
 
 def create_batch_norm_layer(prev, n, activation):
     """
-    Creates a batch normalization layer for a neural network in TensorFlow
+    creates a batch normalization layer for
+    a neural network in tensorflow:
 
-    parameters:
-        prev [tf.moment]: the activated output of the previous layer
-        n [int]: the number of nodes in the layer to be created
-        activation:
-            activation function that should be used on the output of the layer
-
-    utilize tf.layers.Dense layer as the base layer with
+    Args:
+        - prev is the activated output of the previous layer
+        - n is the number of nodes in the layer to be created
+        - activation is the activation function that should be used
+            on the output of the layer
+        - you should use the tf.layers.Dense layer as the base layer
+        with kernal initializer
         tf.contrib.layers.variance_scaling_initializer(mode="FAN_AVG")
-    incorporate two trainable parameters:
-        gamma: initialized as vectors of 1
-        beta: initialized as vectors of 0
-    epsilon = 1 x 10^-8
+        - your layer should incorporate two trainable parameters,
+        gamma and beta, initialized as vectors of 1 and 0 respectively
+        - you should use an epsilon of 1e-8
 
-    returns:
-        a tensor of the activated output for the layer
+    Returns:
+        - the activated output of the layer
     """
-    weights_initializer = tf.contrib.layers.variance_scaling_initializer(
-        mode="FAN_AVG")
-    layer = tf.layers.Dense(
-        n,
-        activation=activation,
-        name="layer",
-        kernal_initializer=weights_initializer)
-    x = layer[prev]
-    gamma = tf.Variable(tf.constant(
-        1, shape=(1, n), trainable=True, name="gamma"))
-    beta = tf.Variable(tf.constant(
-        0, shape=(1, n), trainable=True, name="gamma"))
-    Z = tf.nn.batch_normalization(x, mean, variance, beta, gamma, 1e-8)
-    return Z
+    init = tf.contrib.layers.variance_scaling_initializer(mode="FAN_AVG")
+    model = tf.layers.Dense(units=n, kernel_initializer=init)
+    Z = model(prev)
+    mean, variance = tf.nn.moments(Z, axes=[0])
+    beta = tf.Variable(tf.constant(0.0, shape=[n]), trainable=True)
+    gamma = tf.Variable(tf.constant(1.0, shape=[n]), trainable=True)
+    Z_norm = tf.nn.batch_normalization(Z, mean, variance, beta, gamma, 1e-8)
+    return activation(Z_norm)
