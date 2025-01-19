@@ -1,39 +1,54 @@
 #!/usr/bin/env python3
-'''
-Bidirectional Cell Forward
-'''
+"""
+Defines function that performs forward propagation for bidirectional RNN
+"""
 
 
 import numpy as np
 
 
 def bi_rnn(bi_cell, X, h_0, h_t):
-    '''
-    Function that performs forward propagation for a bidirectional RNN
-    '''
-    t, m, i = X.shape
-    h = h_0.shape[1]  # The dimensionality of the hidden state
+    """
+    Performs forward propagation for a bidirectional RNN
 
-    # Initialize forward and backward hidden state arrays
-    Hf = np.zeros((t, m, h))  # Forward hidden states
-    Hb = np.zeros((t, m, h))  # Backward hidden states
+    Parameters:
+    - bi_cell: An instance of BidirectionalCell
+    - X: numpy.ndarray of shape (t, m, i), data to be used
+        - t: maximum number of time steps
+        - m: batch size
+        - i: dimensionality of data
+    - h_0: numpy.ndarray of shape (m, h), initial hidden state (forward direction)
+    - h_t: numpy.ndarray of shape (m, h), initial hidden state (backward direction)
 
-    # Set the initial hidden states
-    Hf[0] = h_0  # Initialize forward hidden state
-    Hb[-1] = h_t  # Initialize backward hidden state
+    Returns:
+    - H: numpy.ndarray of shape (t, m, 2*h), concatenated hidden states
+    - Y: numpy.ndarray of shape (t, m, o), outputs
+    """
+    t, m, _ = X.shape
+    h = h_0.shape[1]
 
-    # Forward pass
-    for step in range(1, t):
-        Hf[step] = bi_cell.forward(Hf[step - 1], X[step])
+    # Initialize hidden states
+    h_forward = np.zeros((t, m, h))
+    h_backward = np.zeros((t, m, h))
 
-    # Backward pass
-    for step in range(t - 2, -1, -1):
-        Hb[step] = bi_cell.backward(Hb[step + 1], X[step])
+    # Forward propagation (left-to-right)
+    h_prev = h_0
+    for step in range(t):
+        h_prev = bi_cell.forward(h_prev, X[step])
+        h_forward[step] = h_prev
 
-    # Concatenate forward and backward hidden states along the last axis
-    H = np.concatenate((Hf, Hb), axis=-1)
+    # Backward propagation (right-to-left)
+    h_prev = h_t
+    for step in range(t - 1, -1, -1):
+        h_prev = bi_cell.backward(h_prev, X[step])
+        h_backward[step] = h_prev
 
-    # Compute the output using the concatenated hidden states
-    Y = bi_cell.output(H)  # Ensure bi_cell.output handles 2h input
+    # Concatenate hidden states
+    H = np.concatenate((h_forward, h_backward), axis=2)
+
+    # Compute outputs for each concatenated hidden state
+    Y = np.zeros((t, m, bi_cell.Wy.shape[1]))
+    for step in range(t):
+        Y[step] = bi_cell.output(H[step])
 
     return H, Y
