@@ -87,3 +87,4 @@ class RNNCell:
         h_next = np.tanh(np.matmul(concatenation, self.Wh) + self.bh)
         y = self.softmax(np.matmul(h_next, self.Wy) + self.by)
         return h_next, y
+    
