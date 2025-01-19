@@ -3,7 +3,6 @@
 Defines function that performs forward propagation for bidirectional RNN
 """
 
-
 import numpy as np
 
 
@@ -17,8 +16,10 @@ def bi_rnn(bi_cell, X, h_0, h_t):
         - t: maximum number of time steps
         - m: batch size
         - i: dimensionality of data
-    - h_0: numpy.ndarray of shape (m, h), initial hidden state (forward direction)
-    - h_t: numpy.ndarray of shape (m, h), initial hidden state (backward direction)
+    - h_0: numpy.ndarray of shape (m, h),
+        initial hidden state (forward direction)
+    - h_t: numpy.ndarray of shape (m, h),
+        initial hidden state (backward direction)
 
     Returns:
     - H: numpy.ndarray of shape (t, m, 2*h), concatenated hidden states
