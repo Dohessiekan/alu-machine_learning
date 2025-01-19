@@ -1,25 +1,39 @@
 #!/usr/bin/env python3
+'''
+Bidirectional Cell Forward
+'''
+
+
 import numpy as np
 
-class BidirectionalCell:
-    def __init__(self, i, h, o):
-        self.Whf = np.random.randn(i + h, h)  # Weights for forward direction
-        self.Whb = np.random.randn(i + h, h)  # Weights for backward direction
-        self.Wy = np.random.randn(2 * h, o)   # Weights for output
-        self.bhf = np.zeros((1, h))           # Bias for forward direction
-        self.bhb = np.zeros((1, h))           # Bias for backward direction
-        self.by = np.zeros((1, o))            # Bias for output
 
-    def forward(self, h_prev, x_t):
-        concat = np.concatenate((h_prev, x_t), axis=1)
-        h_next = np.tanh(np.dot(concat, self.Whf) + self.bhf)
-        return h_next
+def bi_rnn(bi_cell, X, h_0, h_t):
+    '''
+    Function that performs forward propagation for a bidirectional RNN
+    '''
+    t, m, i = X.shape
+    h = h_0.shape[1]  # The dimensionality of the hidden state
 
-    def backward(self, h_next, x_t):
-        concat = np.concatenate((h_next, x_t), axis=1)
-        h_prev = np.tanh(np.dot(concat, self.Whb) + self.bhb)
-        return h_prev
+    # Initialize forward and backward hidden state arrays
+    Hf = np.zeros((t, m, h))  # Forward hidden states
+    Hb = np.zeros((t, m, h))  # Backward hidden states
 
-    def output(self, H):
-        y = np.dot(H, self.Wy) + self.by
-        return np.exp(y) / np.sum(np.exp(y), axis=1, keepdims=True)
+    # Set the initial hidden states
+    Hf[0] = h_0  # Initialize forward hidden state
+    Hb[-1] = h_t  # Initialize backward hidden state
+
+    # Forward pass
+    for step in range(1, t):
+        Hf[step] = bi_cell.forward(Hf[step - 1], X[step])
+
+    # Backward pass
+    for step in range(t - 2, -1, -1):
+        Hb[step] = bi_cell.backward(Hb[step + 1], X[step])
+
+    # Concatenate forward and backward hidden states along the last axis
+    H = np.concatenate((Hf, Hb), axis=-1)
+
+    # Compute the output using the concatenated hidden states
+    Y = bi_cell.output(H)  # Ensure bi_cell.output handles 2h input
+
+    return H, Y
